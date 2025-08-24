@@ -1,0 +1,16 @@
+{
+  "name": "JEGASolutions - Calculadora de Precios",
+  "short_name": "JEGASolutions",
+  "description": "Calculadora de precios para la Suite Digital Modular de JEGASolutions",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#1e3a8a",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}
