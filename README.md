@@ -185,9 +185,8 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 Para soporte técnico o consultas sobre la calculadora:
 
-- **Email**: soporte@jegasolutions.com
-- **Documentación**: [docs.jegasolutions.com](https://docs.jegasolutions.com)
-- **Sitio Web**: [jegasolutions.com](https://jegasolutions.com)
+- **Email**: jaialgallo@hotmail.com
+- **Sitio Web**: 
 
 ---
 
