@@ -542,7 +542,6 @@ const JEGAPricingCalculator = () => {
               <h4 className="font-semibold mb-2">🚀 ¿Por qué JEGASolutions?</h4>
               <ul className="text-sm text-gray-600 space-y-1">
                 <li>• Suite modular que crece con tu empresa</li>
-                <li>• Integración completa entre módulos</li>
                 <li>• IA avanzada para análisis automático</li>
                 <li>• Implementación en menos de 30 días</li>
               </ul>
