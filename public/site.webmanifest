@@ -4,9 +4,9 @@
   "description": "Calculadora de precios para la Suite Digital Modular de JEGASolutions",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/faviconJEGASolutions.png",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ],
   "theme_color": "#1e3a8a",
