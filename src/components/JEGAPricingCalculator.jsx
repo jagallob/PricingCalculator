@@ -9,6 +9,13 @@ import {
   X,
 } from "lucide-react";
 
+const getCompanySizeForEmployees = (count) => {
+  if (count <= 10) return "micro";
+  if (count <= 50) return "small";
+  if (count <= 200) return "medium";
+  return "large";
+};
+
 const JEGAPricingCalculator = () => {
   const [deploymentType, setDeploymentType] = useState("saas");
   const [companySize, setCompanySize] = useState("small");
@@ -19,10 +26,24 @@ const JEGAPricingCalculator = () => {
   const [employeeCount, setEmployeeCount] = useState(50);
   const [customEmployeeCount, setCustomEmployeeCount] = useState("");
 
+  useEffect(() => {
+    const actualEmployeeCount = customEmployeeCount
+      ? parseInt(customEmployeeCount)
+      : employeeCount;
+
+    if (actualEmployeeCount > 0 && !isNaN(actualEmployeeCount)) {
+      const newSize = getCompanySizeForEmployees(actualEmployeeCount);
+      if (newSize !== companySize) {
+        setCompanySize(newSize);
+      }
+    }
+  }, [employeeCount, customEmployeeCount, companySize]);
+
   // Costos de infraestructura mensual (basado en cotización real Render + Vercel)
   const infraCosts = {
     saas: {
       // Costo por empresa: Render Web Service ($25) + PostgreSQL ($7 + $1.50 storage) + Vercel prorrateado ($4)
+      micro: 37.5, // Mismo costo base de infraestructura que PYME
       small: 37.5, // $37.50/mes por empresa
       medium: 45.0, // Más recursos para empresas medianas
       large: 65.0, // Recursos premium para grandes empresas
@@ -32,26 +53,33 @@ const JEGAPricingCalculator = () => {
   // Precios base transparentes (ahora incluyen margen sobre infraestructura)
   const basePricing = {
     saas: {
+      micro: {
+        base: 39,
+        perEmployee: 2.0,
+        max: 59,
+        infraCost: infraCosts.saas.micro,
+      },
       small: {
-        base: 89,
-        perEmployee: 0.5,
+        base: 79,
+        perEmployee: 1.5,
         max: 149,
         infraCost: infraCosts.saas.small,
       },
       medium: {
-        base: 299,
-        perEmployee: 0.8,
-        max: 599,
+        base: 199,
+        perEmployee: 1.0,
+        max: 349,
         infraCost: infraCosts.saas.medium,
       },
       large: {
-        base: 799,
-        perEmployee: 1.2,
+        base: 499,
+        perEmployee: 0.8,
         max: 1999,
         infraCost: infraCosts.saas.large,
       },
     },
     onpremise: {
+      micro: { license: 5000, maintenance: 0.2, implementation: 2000 },
       small: { license: 8000, maintenance: 0.22, implementation: 3000 },
       medium: { license: 15000, maintenance: 0.23, implementation: 5000 },
       large: { license: 25000, maintenance: 0.25, implementation: 8000 },
@@ -64,22 +92,30 @@ const JEGAPricingCalculator = () => {
   };
 
   const companySizes = {
-    small: { label: "PYME (1-200 empleados)", range: [1, 200] },
-    medium: { label: "Mediana (201-1000 empleados)", range: [201, 1000] },
-    large: { label: "Grande (1000+ empleados)", range: [1000, 5000] },
+    micro: { label: "Micro (hasta 10 empleados)", range: [1, 10] },
+    small: { label: "Pequeña (11-50 empleados)", range: [11, 50] },
+    medium: { label: "Mediana (51-200 empleados)", range: [51, 200] },
+    large: { label: "Grande (201+ empleados)", range: [201, 5000] },
   };
 
   // Calcular precio automáticamente
   const calculatePrice = () => {
     const selectedModulesCount =
       Object.values(selectedModules).filter(Boolean).length;
-    if (selectedModulesCount === 0)
+    if (selectedModulesCount === 0) {
       return { monthly: 0, annual: 0, setup: 0, total3Years: 0 };
+    }
 
     const actualEmployeeCount = customEmployeeCount
-      ? parseInt(customEmployeeCount) || employeeCount
+      ? parseInt(customEmployeeCount) || 0
       : employeeCount;
-    const pricing = basePricing[deploymentType][companySize];
+
+    if (actualEmployeeCount <= 0) {
+      return { monthly: 0, annual: 0, setup: 0, total3Years: 0 };
+    }
+
+    const sizeForPricing = getCompanySizeForEmployees(actualEmployeeCount);
+    const pricing = basePricing[deploymentType][sizeForPricing];
 
     // Calcular multiplicador por módulos seleccionados
     let moduleMultiplier = 0;
@@ -104,9 +140,12 @@ const JEGAPricingCalculator = () => {
         setup: 500,
         total3Years: Math.round(annualPrice * 3 + 500),
         infraCost: pricing.infraCost,
-        grossMargin: Math.round(
-          ((monthlyPrice - pricing.infraCost) / monthlyPrice) * 100
-        ),
+        grossMargin:
+          monthlyPrice > 0
+            ? Math.round(
+                ((monthlyPrice - pricing.infraCost) / monthlyPrice) * 100
+              )
+            : 0,
       };
     } else {
       const licensePrice = pricing.license * moduleMultiplier;
@@ -131,6 +170,17 @@ const JEGAPricingCalculator = () => {
       ...prev,
       [module]: !prev[module],
     }));
+  };
+
+  const handleCompanySizeChange = (size) => {
+    const representativeCounts = {
+      micro: 10,
+      small: 30,
+      medium: 100,
+      large: 250,
+    };
+    setEmployeeCount(representativeCounts[size]);
+    setCustomEmployeeCount("");
   };
 
   const handleEmployeeCountChange = (value) => {
@@ -201,7 +251,7 @@ const JEGAPricingCalculator = () => {
                 {Object.entries(companySizes).map(([size, info]) => (
                   <button
                     key={size}
-                    onClick={() => setCompanySize(size)}
+                    onClick={() => handleCompanySizeChange(size)}
                     className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
                       companySize === size
                         ? "border-blue-500 bg-blue-50"
@@ -210,8 +260,9 @@ const JEGAPricingCalculator = () => {
                   >
                     <div className="font-semibold">{info.label}</div>
                     <div className="text-sm text-gray-600">
-                      {info.range[0]} -{" "}
-                      {info.range[1] === 5000 ? "5000+" : info.range[1]}{" "}
+                      {size === "large"
+                        ? `${info.range[0]}+`
+                        : `${info.range[0]} - ${info.range[1]}`}{" "}
                       empleados
                     </div>
                   </button>
@@ -352,17 +403,21 @@ const JEGAPricingCalculator = () => {
                     <div className="font-medium text-blue-700">
                       SaaS Mensual:
                     </div>
-                    <div>• PYME: $89-149/mes</div>
-                    <div>• Mediana: $299-599/mes</div>
-                    <div>• Grande: $799-1999/mes</div>
+                    <div>• Micro: $39-59/mes</div>
+                    <div>• Pequeña: $79-149/mes</div>
+                    <div>• Mediana: $199-349/mes</div>
+                    <div>• Grande: $499-1999/mes</div>
                     <div className="text-xs text-blue-600 mt-2">
                       *Precio final depende del número de empleados y módulos
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="font-medium text-blue-700">On-Premise:</div>
-                    <div>• PYME: $8K + mant. 22%</div>
+                    <div className="font-medium text-blue-700">
+                      On-Premise (Licencia):
+                    </div>
+                    <div>• Micro: $5K + mant. 20%</div>
+                    <div>• Pequeña: $8K + mant. 22%</div>
                     <div>• Mediana: $15K + mant. 23%</div>
                     <div>• Grande: $25K + mant. 25%</div>
                     <div className="text-xs text-blue-600 mt-2">
